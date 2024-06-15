@@ -351,7 +351,7 @@ config2Fragment() {
 	              {
 	                "id": "$uuid",
 	                "alterId": 0,
-	                "email": "t@t.tt",
+	                "email": "email",
 	                "security": "$security",
 	                "encryption": "none",
 	                "flow": ""
@@ -674,7 +674,7 @@ EOF
               {
                 "id": "$uuid",
                 "alterId": 0,
-                "email": "t@t.tt",
+                "email": "email",
                 "security": "auto",
                 "encryption": "$encryption",
                 "flow": ""
@@ -834,7 +834,7 @@ EOF
               {
                 "id": "$uuid",
                 "alterId": 0,
-                "email": "t@t.tt",
+                "email": "email",
                 "security": "auto",
                 "encryption": "$encryption",
                 "flow": ""
