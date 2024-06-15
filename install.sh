@@ -13,6 +13,8 @@ rest='\033[0m'
 # Check and install necessary packages
 if ! command -v wget &> /dev/null; then
     echo "${green}installing wget...${rest}"
+    pkg update -y
+    pkg upgrade -y
     pkg install wget -y
 fi
 
