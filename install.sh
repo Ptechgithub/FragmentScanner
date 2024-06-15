@@ -55,8 +55,8 @@ fragment_scanner() {
     # Define paths for xray executable and configuration/log files
     XRAY_PATH="$PREFIX/bin/xray"
     CONFIG_PATH="config.json"
-    LOG_FILE="$HOME/pings.txt"
-    XRAY_LOG_FILE="$HOME/xraylogs.txt"
+    LOG_FILE="pings.txt"
+    XRAY_LOG_FILE="xraylogs.txt"
 
     # Check if xray executable exists
     if [ ! -f "$XRAY_PATH" ]; then
