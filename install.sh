@@ -610,6 +610,12 @@ EOF
 		name=$(echo "$link" | sed -n 's|.*#\([^#]*\)$|\1|p')
 		alpn=$(echo "$link" | sed -n 's|.*alpn=\([^&]*\).*|\1|p' | sed 's|,|","|g')
 	    
+	    if [ "$alpn" != "null" ] && [ -n "$alpn" ]; then
+		    alpn="\"$alpn\""
+		else
+		    alpn=""
+		fi
+		
 	    # VLESS TLS
 		if [ "$security" == "tls" ]; then
 	        # Create the JSON config
@@ -689,7 +695,9 @@ EOF
         "tlsSettings": {
           "allowInsecure": false,
           "serverName": "$sni",
-          $(if [ -n "$alpn" ]; then echo "\"alpn\": [\"$alpn\"],"; fi)
+          "alpn": [
+            $alpn
+          ],
           "fingerprint": "$fp",
           "show": false
         },
