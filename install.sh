@@ -610,12 +610,6 @@ EOF
 		name=$(echo "$link" | sed -n 's|.*#\([^#]*\)$|\1|p')
 		alpn=$(echo "$link" | sed -n 's|.*alpn=\([^&]*\).*|\1|p' | sed 's|,|","|g')
 	    
-	    if [ "$alpn" != "null" ] && [ -n "$alpn" ]; then
-	        alpn=$(echo "$alpn" | jq -r 'split(",") | map("\"" + . + "\"") | join(",\n")')
-	    else
-	        alpn=""
-	    fi
-	
 	    # VLESS TLS
 		if [ "$security" == "tls" ]; then
 	        # Create the JSON config
@@ -943,12 +937,6 @@ EOF
 		sni=$(echo "$link" | sed -n 's|.*sni=\([^&]*\).*|\1|p' | sed 's|#.*||')
 		name=$(echo "$link" | sed 's|^.*#||')
 		
-		if [ "$alpn" != "null" ] && [ -n "$alpn" ]; then
-	        alpn=$(echo "$alpn" | jq -r 'split(",") | map("\"" + . + "\"") | join(",\n")')
-	    else
-	        alpn=""
-	    fi
-	
 		if [ "$security" == "tls" ]; then
 			# Build the JSON configuration
 			json=$(cat <<EOF
