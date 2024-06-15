@@ -278,14 +278,6 @@ config2Fragment() {
 		tls=$(echo "$vmess_config" | jq -r '.tls')
 		sni=$(echo "$vmess_config" | jq -r '.sni')
 		name=$(echo "$vmess_config" | jq -r '.ps')
-		alpn=$(echo "$vmess_config" | jq -r '.alpn')
-		
-		# Check if ALPN is not null or empty
-	    if [ "$alpn" != "null" ] && [ -n "$alpn" ]; then
-	        alpn=$(echo "$alpn" | jq -r 'split(",") | map("\"" + . + "\"") | join(",\n")')
-	    else
-	        alpn=""
-	    fi
 		
 		# Check if TLS is provided in the VMess config
 		if [ "$tls" == "tls" ]; then
@@ -367,7 +359,8 @@ config2Fragment() {
           "allowInsecure": false,
           "serverName": "$sni",
           "alpn": [
-            $alpn
+            "h2",
+            "http/1.1"
           ],
           "fingerprint": "$fp",
           "show": false
@@ -608,14 +601,7 @@ EOF
 		conn_type=$(echo "$link" | sed -n 's|.*type=\([^&]*\).*|\1|p')
 		sni=$(echo "$link" | sed -n 's|.*sni=\([^&]*\).*|\1|p' | sed 's|#.*||')
 		name=$(echo "$link" | sed -n 's|.*#\([^#]*\)$|\1|p')
-		alpn=$(echo "$link" | sed -n 's|.*alpn=\([^&]*\).*|\1|p' | sed 's|,|","|g')
 	    
-	    if [ "$alpn" != "null" ] && [ -n "$alpn" ]; then
-		    alpn="\"$alpn\""
-		else
-		    alpn=""
-		fi
-		
 	    # VLESS TLS
 		if [ "$security" == "tls" ]; then
 	        # Create the JSON config
@@ -696,7 +682,8 @@ EOF
           "allowInsecure": false,
           "serverName": "$sni",
           "alpn": [
-            $alpn
+            "h2",
+            "http/1.1"
           ],
           "fingerprint": "$fp",
           "show": false
@@ -938,7 +925,6 @@ EOF
 		port=$(echo "$link" | sed -n 's|^trojan://[^@]*@[^:]*:\([^?]*\).*|\1|p')
 		path=$(echo "$link" | sed -n 's|.*path=\([^&]*\).*|\1|p' | sed 's|%2F|/|g')
 		security=$(echo "$link" | sed -n 's|.*security=\([^&]*\).*|\1|p')
-		alpn=$(echo "$link" | grep -oP '(?<=alpn=)[^&]+' | tr ',' '\n' | sed 's/^/"/;s/$/"/' | tr '\n' ',' | sed 's/,$/\n/')
 		host=$(echo "$link" | sed -n 's|.*host=\([^&]*\).*|\1|p')
 		fp=$(echo "$link" | sed -n 's|.*fp=\([^&]*\).*|\1|p')
 		conn_type=$(echo "$link" | sed -n 's|.*type=\([^&]*\).*|\1|p' | sed 's|#.*||')
@@ -1019,7 +1005,8 @@ EOF
           "allowInsecure": false,
           "serverName": "$sni",
           "alpn": [
-              $alpn
+            "h2",
+            "http/1.1"
           ],
           "fingerprint": "$fp",
           "show": false
