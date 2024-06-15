@@ -774,7 +774,7 @@ EOF
 	    else
 			# VLESS NO TLS
 			uuid=$(echo "$link" | sed -n 's|^vless://\([a-z0-9\-]*\)@.*|\1|p')
-			address=$(echo "$link" | sed -n 's|^vless://[a-z0-9\-]*@\([0-9a-zA-Z.-]*\):.*|\1|p')
+			address=$(echo "$link" | sed -n 's|^vless://[a-z0-9\-]*@\([0-9a-zA-Z.]*\):.*|\1|p')
 			port=$(echo "$link" | sed -n 's|^vless://[a-z0-9\-]*@[0-9a-zA-Z.-]*:\([0-9]*\).*|\1|p')
 			path=$(echo "$link" | sed -n 's|.*path=\([^&]*\).*|\1|p' | sed 's|%2F|/|g')
 			encryption=$(echo "$link" | sed -n 's|.*encryption=\([^&]*\).*|\1|p')
