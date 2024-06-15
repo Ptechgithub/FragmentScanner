@@ -54,7 +54,7 @@ fi
 fragment_scanner() {
     # Define paths for xray executable and configuration/log files
     XRAY_PATH="$PREFIX/bin/xray"
-    CONFIG_PATH="$HOME/config.json"
+    CONFIG_PATH="config.json"
     LOG_FILE="$HOME/pings.txt"
     XRAY_LOG_FILE="$HOME/xraylogs.txt"
 
