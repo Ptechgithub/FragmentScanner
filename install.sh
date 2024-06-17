@@ -12,7 +12,7 @@ rest='\033[0m'
 
 #!/bin/bash
 
-if [ -n "$(command -v termux-chroot)" ] && [ -n "$(command -v jq)" ]; then
+if [ -d "$HOME/.termux" ] && [ -z "$(command -v jq)" ]; then
     echo "Running update & upgrade ..."
     pkg update -y
     pkg upgrade -y
