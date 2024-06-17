@@ -1,5 +1,7 @@
 # FragmentScanner
 
+[English](https://raw.githubusercontent.com/Ptechgithub/FragmentScanner/main/README-en.md)
+
 ## Install
 ```
 bash <(curl -fsSL https://raw.githubusercontent.com/Ptechgithub/FragmentScanner/main/install.sh)
@@ -31,6 +33,8 @@ bash <(curl -fsSL https://raw.githubusercontent.com/Ptechgithub/FragmentScanner/
 در صورت خروج از برنامه برای نمایش مجدد فایل config دستور `cat config.json` را وارد کنید و اینتر بزنید. 
 
  همچنین میتونید کانفیگ فرگمنت دار خودتون رو در فایل config.json ذخیره  کنید و فقط با گزینه 2 اسکن انجام بدید. 
+
+این اسکریپت همچنین میتواند روی Termux اجرا شود.
 
 Credits:
 
