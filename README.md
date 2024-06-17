@@ -1,6 +1,6 @@
 # FragmentScanner
 
-[English](https://raw.githubusercontent.com/Ptechgithub/FragmentScanner/main/README-en.md)
+[English](https://github.com/Ptechgithub/FragmentScanner/blob/main/README-en.md)
 
 ## Install
 ```
