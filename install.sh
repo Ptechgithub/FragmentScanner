@@ -466,7 +466,7 @@ EOF
     # Tls
     if [[ $tls == "tls" || $security == "tls" ]]; then
         json+=$(cat <<EOF
-"security": "tls",
+  "security": "tls",
         "tlsSettings": {
           "allowInsecure": false,
           "serverName": "$sni",
