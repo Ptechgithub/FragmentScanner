@@ -253,38 +253,113 @@ fragment_scanner() {
 
 # ADD FRAGMENT TO CONFIG
 config2Fragment() {
-	echo -en "${green}Enter your Config: ${rest}"
+    # Prompt user for input
+    echo -en "${green}Enter your Config [${yellow}VLESS${cyan}/${yellow}VMESS${cyan}/${yellow}TROJAN${green}][${yellow}Ws${cyan}/${yellow}Grpc${green}]: ${rest}"
     read -r link
-	
-	# VMESS
-	if [[ $link == "vmess://"* ]]; then
-	    # Remove "vmess://" from the beginning
-	    link=${link#"vmess://"}
-	    vmess_config=$(echo "$link" | base64 -d 2>/dev/null)
-	    if [ -z "$vmess_config" ]; then
-	        echo "Invalid VMess link."
-	        exit 1
-	    fi
-		
-		# Parse the VMess config using jq
-		address=$(echo "$vmess_config" | jq -r '.add')
-		port=$(echo "$vmess_config" | jq -r '.port')
-		uuid=$(echo "$vmess_config" | jq -r '.id')
-		path=$(echo "$vmess_config" | jq -r '.path')
-		network=$(echo "$vmess_config" | jq -r '.net')
-		security=$(echo "$vmess_config" | jq -r '.scy')
-		host=$(echo "$vmess_config" | jq -r '.host')
-		fp=$(echo "$vmess_config" | jq -r '.fp')
-		tls=$(echo "$vmess_config" | jq -r '.tls')
-		sni=$(echo "$vmess_config" | jq -r '.sni')
-		name=$(echo "$vmess_config" | jq -r '.ps')
-		
-		# Check if TLS is provided in the VMess config
-		if [ "$tls" == "tls" ]; then
-		    # Create the JSON config with TLS
-		    json=$(cat <<EOF
+
+    # Initialize variables
+    protocol=""
+    network=""
+    address=""
+    port=""
+    uuid=""
+    path=""
+    security=""
+    encryption=""
+    host=""
+    fp=""
+    conn_type=""
+    sni=""
+    name=""
+    pass=""
+    tls=""
+    serviceName=""
+
+    # Decode & parse VMess configuration
+    vmess() {
+        link=${link#"vmess://"}
+        vmess_config=$(echo "$link" | base64 -d 2>/dev/null)
+        
+        address=$(echo "$vmess_config" | jq -r '.add')
+        port=$(echo "$vmess_config" | jq -r '.port')
+        uuid=$(echo "$vmess_config" | jq -r '.id')
+        path=$(echo "$vmess_config" | jq -r '.path')
+        network=$(echo "$vmess_config" | jq -r '.net')
+        security=$(echo "$vmess_config" | jq -r '.scy')
+        host=$(echo "$vmess_config" | jq -r '.host')
+        type=$(echo "$vmess_config" | jq -r '.type')
+        fp=$(echo "$vmess_config" | jq -r '.fp')
+        tls=$(echo "$vmess_config" | jq -r '.tls')
+        sni=$(echo "$vmess_config" | jq -r '.sni')
+        name=$(echo "$vmess_config" | jq -r '.ps')
+        protocol="vmess"
+        if [[ $type == "multi" ]]; then
+            multiMode="true"
+        else
+            multiMode="false"
+        fi
+    }
+
+    # Decode and parse VLESS configuration
+    vless() {
+        uuid=$(echo "$link" | sed -n 's|^vless://\([a-z0-9\-]*\)@.*|\1|p')
+        address=$(echo "$link" | sed -n 's|^vless://[a-z0-9\-]*@\([0-9a-zA-Z.]*\):.*|\1|p')
+        port=$(echo "$link" | sed -n 's|^vless://[a-z0-9\-]*@[0-9a-zA-Z.]*:\([0-9]*\).*|\1|p')
+        path=$(echo "$link" | sed -n 's|.*path=\([^&]*\).*|\1|p' | sed 's|%2F|/|g')
+        security=$(echo "$link" | sed -n 's|.*security=\([^&]*\).*|\1|p')
+        encryption=$(echo "$link" | sed -n 's|.*encryption=\([^&]*\).*|\1|p')
+        host=$(echo "$link" | sed -n 's|.*host=\([^&]*\).*|\1|p')
+        fp=$(echo "$link" | sed -n 's|.*fp=\([^&]*\).*|\1|p')
+        conn_type=$(echo "$link" | sed -n 's|.*type=\([^&]*\).*|\1|p')
+        sni=$(echo "$link" | sed -n 's|.*sni=\([^&]*\).*|\1|p' | sed 's|#.*||')
+        name=$(echo "$link" | sed -n 's|.*#\([^#]*\)$|\1|p')
+        network=$(echo "$link" | sed -n 's|.*type=\([^&]*\).*|\1|p')
+        serviceName=$(echo "$link" | sed -n 's|.*serviceName=\([^&]*\).*|\1|p' | sed 's|%2F|/|g')
+        protocol="vless"
+        if [[ $link == *"mode=multi"* ]]; then
+            multiMode="true"
+        else
+            multiMode="false"
+        fi
+    }
+
+    # Decode & parse Trojan configuration
+    trojan() {
+        pass=$(echo "$link" | sed -n 's|^trojan://\([^@]*\)@.*|\1|p')
+        address=$(echo "$link" | sed -n 's|^trojan://[^@]*@\([^:]*\):.*|\1|p')
+        port=$(echo "$link" | sed -n 's|^trojan://[^@]*@[^:]*:\([^?]*\).*|\1|p')
+        path=$(echo "$link" | sed -n 's|.*path=\([^&]*\).*|\1|p' | sed 's|%2F|/|g')
+        security=$(echo "$link" | sed -n 's|.*security=\([^&]*\).*|\1|p')
+        host=$(echo "$link" | sed -n 's|.*host=\([^&]*\).*|\1|p')
+        fp=$(echo "$link" | sed -n 's|.*fp=\([^&]*\).*|\1|p')
+        conn_type=$(echo "$link" | sed -n 's|.*type=\([^&]*\).*|\1|p' | sed 's|#.*||')
+        sni=$(echo "$link" | sed -n 's|.*sni=\([^&]*\).*|\1|p' | sed 's|#.*||')
+        name=$(echo "$link" | sed 's|^.*#||')
+        network=$(echo "$link" | sed -n 's|.*type=\([^&]*\).*|\1|p')
+        protocol="trojan"
+        if [[ $link == *"mode=multi"* ]]; then
+            multiMode="true"
+        else
+            multiMode="false"
+        fi
+    }
+
+    # Determine protocol and parse configuration
+    if [[ $link == "vmess://"* ]]; then
+        vmess
+    elif [[ $link == "vless://"* ]]; then
+        vless
+    elif [[ $link == "trojan://"* ]]; then
+        trojan
+     else
+         echo -e "${green}Unsupported link.${rest}"
+         exit 1
+         
+    fi
+
+    json=$(cat <<EOF
 {
-  "remarks": "$name+TLS+Fragment",
+  "remarks": "$name+Fragment",
   "log": {
     "access": "",
     "error": "",
@@ -333,9 +408,16 @@ config2Fragment() {
   "outbounds": [
     {
       "tag": "proxy",
-      "protocol": "vmess",
+      "protocol": "$protocol",
       "settings": {
-        "vnext": [
+      
+EOF
+    )
+
+    # Outbound
+    if [[ $protocol == "vmess" || $protocol == "vless" ]]; then
+        json+=$(cat <<EOF
+  "vnext": [
           {
             "address": "$address",
             "port": $port,
@@ -344,7 +426,7 @@ config2Fragment() {
                 "id": "$uuid",
                 "alterId": 0,
                 "email": "email",
-                "security": "$security",
+                "security": "auto",
                 "encryption": "none",
                 "flow": ""
               }
@@ -354,639 +436,15 @@ config2Fragment() {
       },
       "streamSettings": {
         "network": "$network",
-        "security": "tls",
-        "tlsSettings": {
-          "allowInsecure": false,
-          "serverName": "$sni",
-          "alpn": [
-            "h2",
-            "http/1.1"
-          ],
-          "fingerprint": "$fp",
-          "show": false
-        },
-        "wsSettings": {
-          "path": "$path",
-          "headers": {
-            "Host": "$host"
-          }
-        },
-        "sockopt": {
-          "dialerProxy": "fragment",
-          "tcpKeepAliveIdle": 100,
-          "mark": 255,
-          "tcpNoDelay": true
-        }
-      }
-    },
-    {
-      "tag": "fragment",
-      "protocol": "freedom",
-      "settings": {
-        "domainStrategy": "AsIs",
-        "fragment": {
-          "packets": "tlshello",
-          "length": "10-20",
-          "interval": "10-20"
-        }
-      },
-      "streamSettings": {
-        "sockopt": {
-          "tcpNoDelay": true,
-          "tcpKeepAliveIdle": 100
-        }
-      }
-    },
-    {
-      "tag": "direct",
-      "protocol": "freedom",
-      "settings": {}
-    },
-    {
-      "tag": "block",
-      "protocol": "blackhole",
-      "settings": {
-        "response": {
-          "type": "http"
-        }
-      }
-    }
-  ],
-  "routing": {
-    "domainStrategy": "AsIs",
-    "rules": [
-      {
-        "type": "field",
-        "inboundTag": [
-          "api"
-        ],
-        "outboundTag": "api",
-        "enabled": true
-      },
-      {
-        "id": "5627785659655799759",
-        "type": "field",
-        "port": "0-65535",
-        "outboundTag": "proxy",
-        "enabled": true
-      }
-    ]
-  }
-}
+      
 EOF
-	)
-	    else
-	        # VMESS NO TLS
-	        json=$(cat <<EOF
-{
-  "remarks": "$name+NoTls+Fragment",
-  "log": {
-    "access": "",
-    "error": "",
-    "loglevel": "warning"
-  },
-  "inbounds": [
-    {
-      "tag": "socks",
-      "port": 10808,
-      "listen": "127.0.0.1",
-      "protocol": "socks",
-      "sniffing": {
-        "enabled": true,
-        "destOverride": [
-          "http",
-          "tls"
-        ],
-        "routeOnly": false
-      },
-      "settings": {
-        "auth": "noauth",
-        "udp": true,
-        "allowTransparent": false
-      }
-    },
-    {
-      "tag": "http",
-      "port": 10809,
-      "listen": "127.0.0.1",
-      "protocol": "http",
-      "sniffing": {
-        "enabled": true,
-        "destOverride": [
-          "http",
-          "tls"
-        ],
-        "routeOnly": false
-      },
-      "settings": {
-        "auth": "noauth",
-        "udp": true,
-        "allowTransparent": false
-      }
-    }
-  ],
-  "outbounds": [
-    {
-      "tag": "proxy",
-      "protocol": "vmess",
-      "settings": {
-        "vnext": [
-          {
-            "address": "$address",
-            "port": $port,
-            "users": [
-              {
-                "id": "$uuid",
-                "alterId": 0,
-                "email": "email",
-                "security": "auto",
-                "encryption": "none",
-                "flow": ""
-              }
-            ]
-          }
-        ]
-      },
-      "streamSettings": {
-        "network": "ws",
-        "wsSettings": {
-          "path": "$path",
-          "headers": {
-            "Host": "$host"
-          }
-        },
-        "sockopt": {
-          "dialerProxy": "fragment",
-          "tcpKeepAliveIdle": 100,
-          "mark": 255,
-          "tcpNoDelay": true
-        }
-      }
-    },
-    {
-      "tag": "fragment",
-      "protocol": "freedom",
-      "settings": {
-        "domainStrategy": "AsIs",
-        "fragment": {
-          "packets": "1-1",
-          "length": "1-3",
-          "interval": "5"
-        }
-      },
-      "streamSettings": {
-        "sockopt": {
-          "tcpNoDelay": true,
-          "tcpKeepAliveIdle": 100
-        }
-      }
-    },
-    {
-      "tag": "direct",
-      "protocol": "freedom",
-      "settings": {}
-    },
-    {
-      "tag": "block",
-      "protocol": "blackhole",
-      "settings": {
-        "response": {
-          "type": "http"
-        }
-      }
-    }
-  ],
-  "routing": {
-    "domainStrategy": "AsIs",
-    "rules": [
-      {
-        "type": "field",
-        "inboundTag": [
-          "api"
-        ],
-        "outboundTag": "api",
-        "enabled": true
-      },
-      {
-        "id": "5627785659655799759",
-        "type": "field",
-        "port": "0-65535",
-        "outboundTag": "proxy",
-        "enabled": true
-      }
-    ]
-  }
-}
-EOF
-	)
-	    fi
-	    
-		echo "$json" | jq . > config.json
-		echo -e "${purple}************************${rest}"
-		echo -e "${green}Configuration saved to config.json${rest}"
-	
-	#===================================
-	
-	# VLESS
-	elif [[ $link == "vless://"* ]]; then
-	    # Parse the VLESS link
-		uuid=$(echo "$link" | sed -n 's|^vless://\([a-z0-9\-]*\)@.*|\1|p')
-		address=$(echo "$link" | sed -n 's|^vless://[a-z0-9\-]*@\([0-9a-zA-Z.]*\):.*|\1|p')
-		port=$(echo "$link" | sed -n 's|^vless://[a-z0-9\-]*@[0-9a-zA-Z.]*:\([0-9]*\).*|\1|p')
-		path=$(echo "$link" | sed -n 's|.*path=\([^&]*\).*|\1|p' | sed 's|%2F|/|g')
-		security=$(echo "$link" | sed -n 's|.*security=\([^&]*\).*|\1|p')
-		encryption=$(echo "$link" | sed -n 's|.*encryption=\([^&]*\).*|\1|p')
-		host=$(echo "$link" | sed -n 's|.*host=\([^&]*\).*|\1|p')
-		fp=$(echo "$link" | sed -n 's|.*fp=\([^&]*\).*|\1|p')
-		conn_type=$(echo "$link" | sed -n 's|.*type=\([^&]*\).*|\1|p')
-		sni=$(echo "$link" | sed -n 's|.*sni=\([^&]*\).*|\1|p' | sed 's|#.*||')
-		name=$(echo "$link" | sed -n 's|.*#\([^#]*\)$|\1|p')
-	    
-	    # VLESS TLS
-		if [ "$security" == "tls" ]; then
-	        # Create the JSON config
-	        json=$(cat <<EOF
-{
-  "remarks": "$name+TLS+Fragment",
-  "log": {
-    "access": "",
-    "error": "",
-    "loglevel": "warning"
-  },
-  "inbounds": [
-    {
-      "tag": "socks",
-      "port": 10808,
-      "listen": "127.0.0.1",
-      "protocol": "socks",
-      "sniffing": {
-        "enabled": true,
-        "destOverride": [
-          "http",
-          "tls"
-        ],
-        "routeOnly": false
-      },
-      "settings": {
-        "auth": "noauth",
-        "udp": true,
-        "allowTransparent": false
-      }
-    },
-    {
-      "tag": "http",
-      "port": 10809,
-      "listen": "127.0.0.1",
-      "protocol": "http",
-      "sniffing": {
-        "enabled": true,
-        "destOverride": [
-          "http",
-          "tls"
-        ],
-        "routeOnly": false
-      },
-      "settings": {
-        "auth": "noauth",
-        "udp": true,
-        "allowTransparent": false
-      }
-    }
-  ],
-  "outbounds": [
-    {
-      "tag": "proxy",
-      "protocol": "vless",
-      "settings": {
-        "vnext": [
-          {
-            "address": "$address",
-            "port": $port,
-            "users": [
-              {
-                "id": "$uuid",
-                "alterId": 0,
-                "email": "email",
-                "security": "auto",
-                "encryption": "$encryption",
-                "flow": ""
-              }
-            ]
-          }
-        ]
-      },
-      "streamSettings": {
-        "network": "$conn_type",
-        "security": "$security",
-        "tlsSettings": {
-          "allowInsecure": false,
-          "serverName": "$sni",
-          "alpn": [
-            "h2",
-            "http/1.1"
-          ],
-          "fingerprint": "$fp",
-          "show": false
-        },
-        "wsSettings": {
-          "path": "$path",
-          "headers": {
-            "Host": "$host"
-          }
-        },
-        "sockopt": {
-          "dialerProxy": "fragment",
-          "tcpKeepAliveIdle": 100,
-          "mark": 255,
-          "tcpNoDelay": true
-        }
-      }
-    },
-    {
-      "tag": "fragment",
-      "protocol": "freedom",
-      "settings": {
-        "domainStrategy": "AsIs",
-        "fragment": {
-          "packets": "tlshello",
-          "length": "10-20",
-          "interval": "10-20"
-        }
-      },
-      "streamSettings": {
-        "sockopt": {
-          "tcpNoDelay": true,
-          "tcpKeepAliveIdle": 100
-        }
-      }
-    },
-    {
-      "tag": "direct",
-      "protocol": "freedom",
-      "settings": {}
-    },
-    {
-      "tag": "block",
-      "protocol": "blackhole",
-      "settings": {
-        "response": {
-          "type": "http"
-        }
-      }
-    }
-  ],
-  "routing": {
-    "domainStrategy": "AsIs",
-    "rules": [
-      {
-        "type": "field",
-        "inboundTag": [
-          "api"
-        ],
-        "outboundTag": "api",
-        "enabled": true
-      },
-      {
-        "id": "5627785659655799759",
-        "type": "field",
-        "port": "0-65535",
-        "outboundTag": "proxy",
-        "enabled": true
-      }
-    ]
-  }
-}
-EOF
-	)
-	    else
-			# VLESS NO TLS
-			uuid=$(echo "$link" | sed -n 's|^vless://\([a-z0-9\-]*\)@.*|\1|p')
-			address=$(echo "$link" | sed -n 's|^vless://[a-z0-9\-]*@\([0-9a-zA-Z.]*\):.*|\1|p')
-			port=$(echo "$link" | sed -n 's|^vless://[a-z0-9\-]*@[0-9a-zA-Z.-]*:\([0-9]*\).*|\1|p')
-			path=$(echo "$link" | sed -n 's|.*path=\([^&]*\).*|\1|p' | sed 's|%2F|/|g')
-			encryption=$(echo "$link" | sed -n 's|.*encryption=\([^&]*\).*|\1|p')
-			host=$(echo "$link" | sed -n 's|.*host=\([^&]*\).*|\1|p')
-			conn_type=$(echo "$link" | sed -n 's|.*type=\([^&]*\).*|\1|p' | sed 's|#.*||')
-			
-			json=$(cat <<EOF
-{
-  "remarks": "$name+NoTls+Fragment",
-  "log": {
-    "access": "",
-    "error": "",
-    "loglevel": "warning"
-  },
-  "inbounds": [
-    {
-      "tag": "socks",
-      "port": 10808,
-      "listen": "127.0.0.1",
-      "protocol": "socks",
-      "sniffing": {
-        "enabled": true,
-        "destOverride": [
-          "http",
-          "tls"
-        ],
-        "routeOnly": false
-      },
-      "settings": {
-        "auth": "noauth",
-        "udp": true,
-        "allowTransparent": false
-      }
-    },
-    {
-      "tag": "http",
-      "port": 10809,
-      "listen": "127.0.0.1",
-      "protocol": "http",
-      "sniffing": {
-        "enabled": true,
-        "destOverride": [
-          "http",
-          "tls"
-        ],
-        "routeOnly": false
-      },
-      "settings": {
-        "auth": "noauth",
-        "udp": true,
-        "allowTransparent": false
-      }
-    }
-  ],
-  "outbounds": [
-    {
-      "tag": "proxy",
-      "protocol": "vless",
-      "settings": {
-        "vnext": [
-          {
-            "address": "$address",
-            "port": $port,
-            "users": [
-              {
-                "id": "$uuid",
-                "alterId": 0,
-                "email": "email",
-                "security": "auto",
-                "encryption": "$encryption",
-                "flow": ""
-              }
-            ]
-          }
-        ]
-      },
-      "streamSettings": {
-        "network": "$conn_type",
-        "wsSettings": {
-          "path": "$path",
-          "headers": {
-            "Host": "$host"
-          }
-        },
-        "sockopt": {
-          "dialerProxy": "fragment",
-          "tcpKeepAliveIdle": 100,
-          "mark": 255,
-          "tcpNoDelay": true
-        }
-      }
-    },
-    {
-      "tag": "fragment",
-      "protocol": "freedom",
-      "settings": {
-        "domainStrategy": "AsIs",
-        "fragment": {
-          "packets": "1-1",
-          "length": "1-3",
-          "interval": "5"
-        }
-      },
-      "streamSettings": {
-        "sockopt": {
-          "tcpNoDelay": true,
-          "tcpKeepAliveIdle": 100
-        }
-      }
-    },
-    {
-      "tag": "direct",
-      "protocol": "freedom",
-      "settings": {}
-    },
-    {
-      "tag": "block",
-      "protocol": "blackhole",
-      "settings": {
-        "response": {
-          "type": "http"
-        }
-      }
-    }
-  ],
-  "routing": {
-    "domainStrategy": "AsIs",
-    "rules": [
-      {
-        "type": "field",
-        "inboundTag": [
-          "api"
-        ],
-        "outboundTag": "api",
-        "enabled": true
-      },
-      {
-        "id": "5627785659655799759",
-        "type": "field",
-        "port": "0-65535",
-        "outboundTag": "proxy",
-        "enabled": true
-      }
-    ]
-  }
-}
-EOF
-	)
-	    fi
-	
-		echo "$json" | jq . > config.json
-		echo -e "${purple}************************${rest}"
-		echo -e "${green}Configuration saved to config.json${rest}"
-	
-	#===================================
-	elif [[ $link == "trojan://"* ]]; then
-	    
-	    # Extract parameters using sed
-		pass=$(echo "$link" | sed -n 's|^trojan://\([^@]*\)@.*|\1|p')
-		address=$(echo "$link" | sed -n 's|^trojan://[^@]*@\([^:]*\):.*|\1|p')
-		port=$(echo "$link" | sed -n 's|^trojan://[^@]*@[^:]*:\([^?]*\).*|\1|p')
-		path=$(echo "$link" | sed -n 's|.*path=\([^&]*\).*|\1|p' | sed 's|%2F|/|g')
-		security=$(echo "$link" | sed -n 's|.*security=\([^&]*\).*|\1|p')
-		host=$(echo "$link" | sed -n 's|.*host=\([^&]*\).*|\1|p')
-		fp=$(echo "$link" | sed -n 's|.*fp=\([^&]*\).*|\1|p')
-		conn_type=$(echo "$link" | sed -n 's|.*type=\([^&]*\).*|\1|p' | sed 's|#.*||')
-		sni=$(echo "$link" | sed -n 's|.*sni=\([^&]*\).*|\1|p' | sed 's|#.*||')
-		name=$(echo "$link" | sed 's|^.*#||')
-		
-		if [ "$security" == "tls" ]; then
-			# Build the JSON configuration
-			json=$(cat <<EOF
-{
-  "remarks": "$name+TLS+Fragment",
-  "log": {
-    "access": "",
-    "error": "",
-    "loglevel": "warning"
-  },
-  "inbounds": [
-    {
-      "tag": "socks",
-      "port": 10808,
-      "listen": "127.0.0.1",
-      "protocol": "socks",
-      "sniffing": {
-        "enabled": true,
-        "destOverride": [
-          "http",
-          "tls"
-        ],
-        "routeOnly": false
-      },
-      "settings": {
-        "auth": "noauth",
-        "udp": true,
-        "allowTransparent": false
-      }
-    },
-    {
-      "tag": "http",
-      "port": 10809,
-      "listen": "127.0.0.1",
-      "protocol": "http",
-      "sniffing": {
-        "enabled": true,
-        "destOverride": [
-          "http",
-          "tls"
-        ],
-        "routeOnly": false
-      },
-      "settings": {
-        "auth": "noauth",
-        "udp": true,
-        "allowTransparent": false
-      }
-    }
-  ],
-  "outbounds": [
-    {
-      "tag": "proxy",
-      "protocol": "trojan",
-      "settings": {
-        "servers": [
+        )
+    fi
+
+    #Add Trojan settings
+    if [[ $protocol == "trojan" ]]; then
+        json+=$(cat <<EOF
+  "servers": [
           {
             "address": "$address",
             "level": 1,
@@ -999,8 +457,16 @@ EOF
         ]
       },
       "streamSettings": {
-        "network": "$conn_type",
-        "security": "$security",
+        "network": "$network",
+        
+EOF
+        )
+    fi
+
+    # Tls
+    if [[ $tls == "tls" || $security == "tls" ]]; then
+        json+=$(cat <<EOF
+"security": "tls",
         "tlsSettings": {
           "allowInsecure": false,
           "serverName": "$sni",
@@ -1008,16 +474,43 @@ EOF
             "h2",
             "http/1.1"
           ],
-          "fingerprint": "$fp",
+          "fingerprint": "chrome",
           "show": false
         },
-        "wsSettings": {
+        
+EOF
+        )
+    fi
+
+    # Add GRPC settings if network is grpc
+    if [[ $network == "grpc" ]]; then
+        json+=$(cat <<EOF
+"grpcSettings": {
+          "multiMode": $multiMode,
+          "serviceName": "$serviceName"
+        },
+        
+EOF
+        )
+    fi
+
+    # Add websocket settings for VMess and VLESS WS
+    if [[ $network == "ws" ]]; then
+        json+=$(cat <<EOF
+  "wsSettings": {
           "path": "$path",
           "headers": {
             "Host": "$host"
           }
         },
-        "sockopt": {
+        
+EOF
+        )
+    fi
+
+    if [[ $tls == "tls" || $security == "tls" ]]; then
+        json+=$(cat <<EOF
+"sockopt": {
           "dialerProxy": "fragment",
           "tcpKeepAliveIdle": 100,
           "mark": 255,
@@ -1036,139 +529,12 @@ EOF
           "interval": "10-20"
         }
       },
-      "streamSettings": {
-        "sockopt": {
-          "tcpNoDelay": true,
-          "tcpKeepAliveIdle": 100
-        }
-      }
-    },
-    {
-      "tag": "direct",
-      "protocol": "freedom",
-      "settings": {}
-    },
-    {
-      "tag": "block",
-      "protocol": "blackhole",
-      "settings": {
-        "response": {
-          "type": "http"
-        }
-      }
-    }
-  ],
-  "routing": {
-    "domainStrategy": "AsIs",
-    "rules": [
-      {
-        "type": "field",
-        "inboundTag": [
-          "api"
-        ],
-        "outboundTag": "api",
-        "enabled": true
-      },
-      {
-        "id": "5627785659655799759",
-        "type": "field",
-        "port": "0-65535",
-        "outboundTag": "proxy",
-        "enabled": true
-      }
-    ]
-  }
-}
+      
 EOF
-	)
-	    else
-			# Extract parameters using sed
-			pass=$(echo "$link" | sed -n 's|^trojan://\([a-zA-Z0-9]*\)@.*|\1|p')
-			address=$(echo "$link" | sed -n 's|^trojan://[a-zA-Z0-9]*@\([0-9a-zA-Z.-]*\):.*|\1|p')
-			port=$(echo "$link" | sed -n 's|^trojan://[a-zA-Z0-9]*@[0-9a-zA-Z.-]*:\([0-9]*\).*|\1|p')
-			path=$(echo "$link" | sed -n 's|.*path=\([^&]*\).*|\1|p' | sed 's|%2F|/|g')
-			security=$(echo "$link" | sed -n 's|.*security=\([^&]*\).*|\1|p')
-			host=$(echo "$link" | sed -n 's|.*host=\([^&]*\).*|\1|p')
-			fp=$(echo "$link" | sed -n 's|.*fp=\([^&]*\).*|\1|p')
-			conn_type=$(echo "$link" | sed -n 's|.*type=\([^&]*\).*|\1|p' | sed 's|#.*||')
-			sni=$(echo "$link" | sed -n 's|.*sni=\([^&]*\).*|\1|p' | sed 's|#.*||')
-			name=$(echo "$link" | sed 's|^.*#||')
-			
-			# TROJAN NO TLS
-			json=$(cat <<EOF
-{
-  "remarks": "$name+NoTls+Fragment",
-  "log": {
-    "access": "",
-    "error": "",
-    "loglevel": "warning"
-  },
-  "inbounds": [
-    {
-      "tag": "socks",
-      "port": 10808,
-      "listen": "127.0.0.1",
-      "protocol": "socks",
-      "sniffing": {
-        "enabled": true,
-        "destOverride": [
-          "http",
-          "tls"
-        ],
-        "routeOnly": false
-      },
-      "settings": {
-        "auth": "noauth",
-        "udp": true,
-        "allowTransparent": false
-      }
-    },
-    {
-      "tag": "http",
-      "port": 10809,
-      "listen": "127.0.0.1",
-      "protocol": "http",
-      "sniffing": {
-        "enabled": true,
-        "destOverride": [
-          "http",
-          "tls"
-        ],
-        "routeOnly": false
-      },
-      "settings": {
-        "auth": "noauth",
-        "udp": true,
-        "allowTransparent": false
-      }
-    }
-  ],
-  "outbounds": [
-    {
-      "tag": "proxy",
-      "protocol": "trojan",
-      "settings": {
-        "servers": [
-          {
-            "address": "$address",
-            "level": 1,
-            "flow": "",
-            "method": "chacha20-poly1305",
-            "ota": false,
-            "password": "$pass",
-            "port": $port
-          }
-        ]
-      },
-      "streamSettings": {
-        "network": "$conn_type",
-        "wsSettings": {
-          "path": "$path",
-          "headers": {
-            "Host": "$host"
-          }
-        },
-        "sockopt": {
+        )
+    else
+        json+=$(cat <<EOF
+"sockopt": {
           "dialerProxy": "fragment",
           "tcpKeepAliveIdle": 100,
           "mark": 255,
@@ -1187,7 +553,14 @@ EOF
           "interval": "5"
         }
       },
-      "streamSettings": {
+      
+EOF
+        )
+    fi
+
+    # Complete streamSettings
+    json+=$(cat <<EOF
+"streamSettings": {
         "sockopt": {
           "tcpNoDelay": true,
           "tcpKeepAliveIdle": 100
@@ -1231,17 +604,16 @@ EOF
   }
 }
 EOF
-	)
-	    fi
-	
-	    echo "$json" | jq . > config.json
-	    echo -e "${purple}************************${rest}"
-		echo -e "${green}Configuration saved to config.json${rest}"
-	
-	else
-	    echo -e "${red}Unsupported Config type.${rest}"
-	    exit 1
-	fi
+    )
+
+    echo "$json" > config.json
+    echo -e "${yellow}==========================${rest}"
+    echo -e "${yellow}==========================${rest}"
+    cat config.json
+    echo -e "${yellow}===============================${rest}"
+    echo ""
+    echo -e "${green}Config saved in ${yelllow}config.json ${green}file${rest}"
+    echo -e "${yellow}==========================${rest}"
 }
 
 # Main menu
