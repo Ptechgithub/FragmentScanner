@@ -7,9 +7,9 @@ bash <(curl -fsSL https://raw.githubusercontent.com/Ptechgithub/FragmentScanner/
 ![28](https://raw.githubusercontent.com/Ptechgithub/configs/main/media/28.jpg)
 
 - Supports protocols:
- - VLESS WS/GRPC
- - VMESS WS/GRPC
- - TROJAN WS/GRPC
+  - VLESS WS/GRPC
+  - VMESS WS/GRPC
+  - TROJAN WS/GRPC
 
 By selecting option 1, you can provide your simple configuration (without fragment) to the script, and it will give you a custom output (in JSON format) with the fragment. You can copy and use this format as it is the prerequisite for option 2.
 
