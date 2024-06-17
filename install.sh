@@ -352,7 +352,7 @@ config2Fragment() {
     elif [[ $link == "trojan://"* ]]; then
         trojan
      else
-         echo -e "${green}Unsupported link.${rest}"
+         echo -e "${red}Unsupported link.${rest}"
          exit 1
          
     fi
