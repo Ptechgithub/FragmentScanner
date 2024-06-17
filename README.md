@@ -8,10 +8,10 @@ bash <(curl -fsSL https://raw.githubusercontent.com/Ptechgithub/FragmentScanner/
 ```
 ![28](https://raw.githubusercontent.com/Ptechgithub/configs/main/media/28.jpg)
 
-- پشتیبانی فعلی از پروتکل های:
-- VLESS WS
-- VMESS WS
-- TROJAN WS
+- پشتیبانی از پروتکل‌های 
+- VLESS WS/GRPC
+- VMESS WS/GRPC
+- TROJAN WS/GRPC
 
  همچنین میتونید کانفیگ فرگمنت دار خودتون رو در فایل config.json ذخیره  کنید و فقط با گزینه 2 اسکن انجام بدید. 
 
