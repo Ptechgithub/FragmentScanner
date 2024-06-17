@@ -611,8 +611,7 @@ EOF
     echo -e "${yellow}==========================${rest}"
     cat config.json
     echo -e "${yellow}===============================${rest}"
-    echo ""
-    echo -e "${green}Config saved in ${yelllow}config.json ${green}file${rest}"
+    echo -e "${green}Config saved in ${yellow}config.json ${green}file${rest}"
     echo -e "${yellow}==========================${rest}"
 }
 
