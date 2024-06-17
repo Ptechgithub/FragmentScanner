@@ -10,8 +10,6 @@ cyan='\033[0;36m'
 white='\033[0;37m'
 rest='\033[0m'
 
-#!/bin/bash
-
 if [ -d "$HOME/.termux" ] && [ -z "$(command -v jq)" ]; then
     echo "Running update & upgrade ..."
     pkg update -y
@@ -21,19 +19,37 @@ fi
 # Check and install necessary packages
 install_packages() {
     local packages=(wget curl unzip jq)
-    if [ -n "$(command -v pkg)" ]; then
-        pkg install "${packages[@]}" -y
-    elif [ -n "$(command -v apt)" ]; then
-        sudo apt install "${packages[@]}" -y
-    elif [ -n "$(command -v yum)" ]; then
-        sudo yum install "${packages[@]}" -y
-    elif [ -n "$(command -v dnf)" ]; then
-        sudo dnf install "${packages[@]}" -y
+    local missing_packages=()
+
+    # Check for missing packages
+    for pkg in "${packages[@]}"; do
+        if ! command -v "$pkg" &> /dev/null; then
+            missing_packages+=("$pkg")
+        fi
+    done
+
+    # If any package is missing, install missing packages
+    if [ ${#missing_packages[@]} -gt 0 ]; then
+        if [ -n "$(command -v pkg)" ]; then
+            pkg install "${missing_packages[@]}" -y
+        elif [ -n "$(command -v apt)" ]; then
+            sudo apt update -y
+            sudo apt install "${missing_packages[@]}" -y
+        elif [ -n "$(command -v yum)" ]; then
+            sudo yum update -y
+            sudo yum install "${missing_packages[@]}" -y
+        elif [ -n "$(command -v dnf)" ]; then
+            sudo dnf update -y
+            sudo dnf install "${missing_packages[@]}" -y
+        else
+            echo -e "${yellow}Unsupported package manager. Please install required packages manually.${rest}"
+            exit 1
+        fi
     else
-        echo -e "${red}Unsupported package manager. Please install required packages manually.${rest}"
-        exit 1
+        echo -e "${green}All packages are already installed.${rest}"
     fi
 }
+
 install_packages
 # Download and install Xray if not already installed
 if ! [ -x "$PREFIX/bin/xray" ]; then
