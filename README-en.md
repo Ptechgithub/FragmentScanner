@@ -32,5 +32,7 @@ If you exit the program and want to display the `config.json` file again, enter 
 
 You can also save your fragment configuration in the `config.json` file and just use option 2 to perform the scan.
 
+This script can also be run on Termux.
+
 Credits:
 [Surfboardv2ray](https://github.com/Surfboardv2ray/batch-fragment-scanner)
