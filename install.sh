@@ -619,28 +619,28 @@ EOF
 clear
 echo -e "${cyan}By --> Peyman * Github.com/Ptechgithub * ${rest}"
 echo ""
-echo -e "${purple}************************${rest}"
-echo -e "${purple}*    ${green}Fragment Tools${purple}    *${rest}"
-echo -e "${purple}************************${rest}"
-echo -e "${purple}[1] ${blue}Config To fragment${purple} * ${rest}"
-echo -e "${purple}                       *${rest}"
-echo -e "${purple}[2] ${blue}Fragment Scanner${purple}   * ${rest}"
-echo -e "${purple}                       *${rest}"
-echo -e "${purple}[${red}0${purple}] Exit               *${rest}"
-echo -e "${purple}************************${rest}"
+echo -e "${yellow}************************${rest}"
+echo -e "${yellow}*    ${green}Fragment Tools${yellow}    *${rest}"
+echo -e "${yellow}************************${rest}"
+echo -e "${yellow}[${green}1${yellow}] ${purple}Config To fragment${yellow} * ${rest}"
+echo -e "${yellow}                       *${rest}"
+echo -e "${yellow}[${green}2${yellow}] ${purple}Fragment Scanner${yellow}   * ${rest}"
+echo -e "${yellow}                       *${rest}"
+echo -e "${yellow}[${red}0${yellow}] Exit               *${rest}"
+echo -e "${yellow}************************${rest}"
 echo -en "${cyan}Enter your choice: ${rest}"
 read -r choice
 case "$choice" in
     1)
-        echo -e "${purple}************************${rest}"
+        echo -e "${yellow}************************${rest}"
         config2Fragment
         ;;
     2)
-        echo -e "${purple}************************${rest}"
+        echo -e "${yellow}************************${rest}"
         fragment_scanner
         ;;
     0)
-        echo -e "${purple}************************${rest}"
+        echo -e "${yellow}************************${rest}"
         echo -e "${cyan}Goodbye!${rest}"
         exit
         ;;
