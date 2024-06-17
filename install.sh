@@ -34,7 +34,7 @@ install_packages() {
         exit 1
     fi
 }
-
+install_packages
 # Download and install Xray if not already installed
 if ! [ -x "$PREFIX/bin/xray" ]; then
     wget https://github.com/XTLS/Xray-core/releases/download/v1.8.13/Xray-android-arm64-v8a.zip
@@ -618,7 +618,6 @@ EOF
 }
 
 # Main menu
-install_packages
 clear
 echo -e "${cyan}By --> Peyman * Github.com/Ptechgithub * ${rest}"
 echo ""
