@@ -633,7 +633,7 @@ EOF
     echo -e "${yellow}==========================${rest}"
 }
 
-# Main menu
+# Main Menu
 clear
 echo -e "${cyan}By --> Peyman * Github.com/Ptechgithub * ${rest}"
 echo ""
