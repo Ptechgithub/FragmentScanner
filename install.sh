@@ -10,28 +10,30 @@ cyan='\033[0;36m'
 white='\033[0;37m'
 rest='\033[0m'
 
-# Check and install necessary packages
-if ! command -v wget &> /dev/null; then
-    echo "${green}installing wget...${rest}"
+#!/bin/bash
+
+if [ -n "$(command -v termux-chroot)" ] && [ -n "$(command -v jq)" ]; then
+    echo "Running update & upgrade ..."
     pkg update -y
     pkg upgrade -y
-    pkg install wget -y
 fi
 
-if ! command -v curl &> /dev/null; then
-    echo "${green}installing curl...${rest}"
-    pkg install curl -y
-fi
-
-if ! command -v unzip &> /dev/null; then
-    echo "${green}installing unzip...${rest}"
-    pkg install unzip -y
-fi
-
-if ! command -v jq &> /dev/null; then
-    echo "${green}installing jq...${rest}"
-    pkg install jq -y
-fi
+# Check and install necessary packages
+install_packages() {
+    local packages=(wget curl unzip jq)
+    if [ -n "$(command -v pkg)" ]; then
+        pkg install "${packages[@]}" -y
+    elif [ -n "$(command -v apt)" ]; then
+        sudo apt install "${packages[@]}" -y
+    elif [ -n "$(command -v yum)" ]; then
+        sudo yum install "${packages[@]}" -y
+    elif [ -n "$(command -v dnf)" ]; then
+        sudo dnf install "${packages[@]}" -y
+    else
+        echo -e "${red}Unsupported package manager. Please install required packages manually.${rest}"
+        exit 1
+    fi
+}
 
 # Download and install Xray if not already installed
 if ! [ -x "$PREFIX/bin/xray" ]; then
@@ -616,6 +618,7 @@ EOF
 }
 
 # Main menu
+install_packages
 clear
 echo -e "${cyan}By --> Peyman * Github.com/Ptechgithub * ${rest}"
 echo ""
