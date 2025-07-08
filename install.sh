@@ -52,20 +52,36 @@ install_packages() {
 
 install_packages
 # Download and install Xray if not already installed
-if ! [ -x "$PREFIX/bin/xray" ]; then
-    wget https://github.com/XTLS/Xray-core/releases/download/v25.6.8/Xray-android-arm64-v8a.zip
-    unzip Xray-android-arm64-v8a.zip
-    mv xray $PREFIX/bin
-    rm README.md geoip.dat geosite.dat LICENSE Xray-android-arm64-v8a.zip
+latest_version=$(curl -s https://api.github.com/repos/XTLS/Xray-core/releases/latest | jq -r .tag_name | sed 's/^v//')
+
+installed_version=""
+if [ -x "$PREFIX/bin/xray" ]; then
+    installed_version=$($PREFIX/bin/xray -version | grep -oE 'Xray [^ ]+' | awk '{print $2}')
+fi
+
+if [ "$installed_version" != "$latest_version" ]; then
+    echo -e "${yellow}Installing or upgrading Xray to version $latest_version...${rest}"
+    
+    rm -f $PREFIX/bin/xray geoip.dat geosite.dat
+    file_name="Xray-android-arm64-v8a.zip"
+    url="https://github.com/XTLS/Xray-core/releases/download/v$latest_version/$file_name"
+
+    wget "$url" -O "$file_name" || { echo -e "${red}Download failed.${rest}"; exit 1; }
+    unzip -o "$file_name" || { echo -e "${red}Unzip failed.${rest}"; exit 1; }
+
+    mv xray "$PREFIX/bin/"
+    chmod +x "$PREFIX/bin/xray"
+
+    rm -f README.md LICENSE "$file_name"
 
     if [ -x "$PREFIX/bin/xray" ]; then
-        echo -e "${green}Xray installed successfully.${rest}"
+        echo -e "${green}Xray $latest_version installed successfully.${rest}"
     else
         echo -e "${red}Xray installation failed.${rest}"
         exit 1
     fi
 else
-    echo -e "${yellow}Xray is already installed.${rest}"
+    echo -e "${green}Xray is already up to date (version $installed_version).${rest}"
 fi
 
 # Fragment Scanner
